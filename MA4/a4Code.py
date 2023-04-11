@@ -46,6 +46,10 @@ combined["genre"] = combined["genre"].str.lower()
 #if the genre is "Chadsildren's Literature", change it to "Children's Literature"
 combined["genre"] = combined["genre"].replace("chadsildren's literature", "children's literature")
 
+# lcean up the year column by only pulling out the first 4 numbers of the string and converting it to an integer
+combined["year"] = combined["year"].str.split(" ").str[0]
+combined["year"] = pd.to_numeric(combined["year"])
+
 # print the head of the combined dataframe
 print(combined.head())
 
@@ -59,6 +63,11 @@ print(combined["genre"].nunique())
 
 # print the number of unique authors
 print(combined["author"].nunique())
+
+# create a new dataframe where author = J.K. Rowling
+jkRowling = combined[combined["author"] == "J. K. Rowling"]
+# sum copiesSold for jkRowling
+print(jkRowling["copiesSold"].sum())
 
 
 #--ANALYSIS--
@@ -79,6 +88,9 @@ plt.show()
 # and does this relationship vary by genre, author, or publication year?
 
 # create a bar chart of copiesSold and rating
+# categorize ratings by 3.6, 3.7, 3.8, 3.9, 4.0, 4.1, 4.2, 4.3, 4.4, 4.5, 4.6, 4.7, 4.8, 4.9, 5.0
+# create a new column called "average_rating" that rounds the average_rating column to the nearest tenth
+combined["average_rating"] = combined["average_rating"].round(1)
 combined.groupby("average_rating").sum()["copiesSold"].plot(kind="bar")
 plt.title("Rating vs. Copies Sold (in millions)")
 plt.show()
@@ -92,8 +104,13 @@ plt.title("Genre vs. Copies Sold (in millions)")
 plt.show()
 
 # create a bar chart of copiesSold and year
+# categorize years by 5 year increments from 1813-2005
+
+# create a new column called "year" that rounds the year column to the nearest 5
+combined["year"] = combined["year"].round(-1)
 combined.groupby("year").sum()["copiesSold"].plot(kind="bar")
 plt.title("Year vs. Copies Sold (in millions)")
+plt.gcf().set_size_inches(20, 10)
 plt.show()
 
 # create a bar chart of copiesSold and author
@@ -105,11 +122,31 @@ plt.show()
 # create a bar chart of copiesSold and publisher
 combined.groupby("publisher").sum()["copiesSold"].plot(kind="bar")
 plt.title("Publisher vs. Copies Sold (in millions)")
+# expand the plot so the publisher names are readable
+plt.gcf().set_size_inches(20, 10)
 plt.show()
 
 # do high rated books sell more copies?
 # create a pearson correlation coefficient between rating and copiesSold
 print(combined["average_rating"].corr(combined["copiesSold"]))
+# do a pearson correlation coefficient between rating and copiesSold for each genre, print with the genre
+for genre in combined["genre"].unique():
+    print(genre, combined[combined["genre"] == genre]["average_rating"].corr(combined[combined["genre"] == genre]["copiesSold"]))
+
+# do a pearson correlation coefficient between rating and copiesSold for each author, print with the author
+for author in combined["author"].unique():
+    print(author, combined[combined["author"] == author]["average_rating"].corr(combined[combined["author"] == author]["copiesSold"]))
+
+# do a pearson correlation coefficient between rating and copiesSold for each year, print with the year
+for year in combined["year"].unique():
+    print(year, combined[combined["year"] == year]["average_rating"].corr(combined[combined["year"] == year]["copiesSold"]))
+
+# do a pearson correlation coefficient between rating and copiesSold for each publisher, print with the publisher
+for publisher in combined["publisher"].unique():
+    print(publisher, combined[combined["publisher"] == publisher]["average_rating"].corr(combined[combined["publisher"] == publisher]["copiesSold"]))
+
+    
+
 # do a t test to see if the correlation is significant
 from scipy import stats
 print(stats.ttest_ind(combined["average_rating"], combined["copiesSold"]))
